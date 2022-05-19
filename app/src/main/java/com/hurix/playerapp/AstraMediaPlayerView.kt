@@ -11,6 +11,7 @@ import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.upstream.BaseDataSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSource
 
@@ -18,6 +19,8 @@ import com.google.android.exoplayer2.upstream.DefaultDataSource
 class AstraMediaPlayerView : StyledPlayerView, Player.Listener {
 
 
+    private lateinit var defaultSourceFactory: DefaultDataSource.Factory
+    private lateinit var dataSourceFactory: DataSource.Factory
     private lateinit var trackSelector: DefaultTrackSelector
     val url = "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
     val key = ""
@@ -40,55 +43,31 @@ class AstraMediaPlayerView : StyledPlayerView, Player.Listener {
         minimumWidth = 500
         minimumHeight = 500
         try {
-            val defaultSourceFactory: DataSource.Factory =
-                DefaultDataSource.Factory(mContext)
-
-            val dataSourceFactory: DataSource.Factory =
+            defaultSourceFactory = DefaultDataSource.Factory(mContext)
+            dataSourceFactory =
                 EncryptedFileDataSource.Factory(key.toByteArray(), "AES/CBC/NoPadding")
             trackSelector = DefaultTrackSelector(mContext)
-
-            val hlsMediaSource = HlsMediaSource.Factory(defaultSourceFactory)
-                .setAllowChunklessPreparation(false)
-                .createMediaSource(MediaItem.fromUri(url))
             player = ExoPlayer.Builder(mContext).setTrackSelector(trackSelector!!).build()
 
             player.playWhenReady = true
-
-
-
             controllerAutoShow = true
-
             controllerShowTimeoutMs = 0
-
             controllerHideOnTouch = false
 
-//      val hlsuri = "https://astracore-dev-static.s3.amazonaws.com/879c11b4-8e70-423b-9e8c-2d0a3d52c8df/843af611-3c57-43cf-81d9-32f328619775/playlist.m3u8"
-//      val hlsuri = "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
-
-
-
-
-            player.setMediaSource(hlsMediaSource);
-            player.prepare()
             player.addListener(object : Player.Listener {
                 override fun onPlayerError(error: PlaybackException) {
                     super.onPlayerError(error)
-                    Log.e("EXO onPlayerError", "Error : $error")
-
+                    Log.e("EXO onPlayerError", "onPlayerError : $error")
                 }
 
                 override fun onPlayerErrorChanged(error: PlaybackException?) {
                     super.onPlayerErrorChanged(error)
-                    Log.e("EXO ErrorChanged", "Error : $error")
-                }
-
-                override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                    super.onPlayerStateChanged(playWhenReady, playbackState)
+                    Log.e("EXO ErrorChanged", "onPlayerErrorChanged : $error")
                 }
 
                 override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                     super.onPlayWhenReadyChanged(playWhenReady, reason)
-
+                    Log.e("EXO ErrorChanged", "onPlayWhenReadyChanged :reason$reason")
                 }
             })
 
@@ -103,12 +82,19 @@ class AstraMediaPlayerView : StyledPlayerView, Player.Listener {
     }
 
     fun play() {
-       /* val uri: Uri = Uri.parse(url)
-        val mediaItem: MediaItem = MediaItem.fromUri(uri)
-        Log.e("Mark up uri", uri.toString())
-        Log.e("Mark up url", url)
+        /* val uri: Uri = Uri.parse(url)
+         val mediaItem: MediaItem = MediaItem.fromUri(uri)
+         Log.e("Mark up uri", uri.toString())
+         Log.e("Mark up url", url)
 
-        player.setMediaItem(mediaItem)*/
+         player.setMediaItem(mediaItem)*/
+
+        val hlsMediaSource = HlsMediaSource.Factory(defaultSourceFactory)
+            .setAllowChunklessPreparation(true)
+            .createMediaSource(MediaItem.fromUri(url))
+
+        player.setMediaSource(hlsMediaSource);
+        player.prepare()
         player.play()
     }
 
